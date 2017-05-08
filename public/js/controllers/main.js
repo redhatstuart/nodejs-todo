@@ -3,7 +3,7 @@ angular.module('todoController', [])
 // inject the Todo service factory into our controller
 .controller('mainController', ['$scope', '$http', 'Todos', 'HostDetail', function($scope, $http, Todos, HostDetail) {
     $scope.formData = {};
-    $scope.hostName = "";
+    $scope.hostInfo = {};
     $scope.loading = true;
 
     // GET =====================================================================
@@ -20,7 +20,7 @@ angular.module('todoController', [])
     // docker host detail
     // use the service to get host details, for now it is just the hostname	
     HostDetail.get().success(function(data) {
-        $scope.hostName = data.hostname;
+        $scope.hostInfo = data;
     });
 
     // CREATE ==================================================================
