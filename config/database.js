@@ -1,4 +1,4 @@
 module.exports = {
-    remoteUrl: process.env.MONGO_DBCONNECTION,
-    localUrl: process.env.MONGO_DBCONNECTION
+    remoteUrl: process.env.NODE_TODO_MONGO_DBCONNECTION,
+    localUrl: process.env.NODE_TODO_MONGO_DBCONNECTION
 };
