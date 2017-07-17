@@ -9,9 +9,6 @@ module.exports = {
     {
       name      : 'nodejs-todo',
       script    : 'server.js',
-      env: {
-        NODE_TODO_MONGO_DBCONNECTION: 'mongodb://dansand-mongo-svr1:27017/todo'
-      },
       env_production : {
         NODE_ENV: 'development'
       }
