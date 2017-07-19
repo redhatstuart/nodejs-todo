@@ -9,6 +9,7 @@ module.exports = {
     {
       name      : 'nodejs-todo',
       script    : 'server.js',
+<<<<<<< HEAD
       env : {
         NODE_ENV: 'development',
         NODE_DB_Type: 'iaas mongo instance',
@@ -17,3 +18,11 @@ module.exports = {
     }
   ]
 }
+=======
+      env_production : {
+        NODE_ENV: 'development'
+      }
+    }
+  ]
+}
+>>>>>>> 5fbaabc4248188327b5f19d4ff1c627060806c49
