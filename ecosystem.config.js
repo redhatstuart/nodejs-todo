@@ -11,8 +11,10 @@ module.exports = {
       script    : 'server.js',
       env : {
           NODE_ENV: 'development',
-          NODE_DB_Type: 'iaas mongo instance',
+          RUNNING_ENVIRO: 'Running on AWS IAAS',
+          NODE_DB_Type: 'IAAS mongo instance',
           NODE_TODO_MONGO_DBCONNECTION: "mongodb://dansand-mongo-svr1:27017/todo"
+
         }
     }
   ]

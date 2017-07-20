@@ -67,6 +67,7 @@
         <!-- HEADER AND TODO COUNT -->
         <div class="jumbotron text-center">
             <h1>I'm a Todo-aholic <span class="label label-info">{{ todos.length }}</span></h1>
+            <h2>{{ hostInfo.running_enviro }}</h2>
         </div>
 
         <!-- TODO LIST -->
@@ -105,7 +106,7 @@
         <div class="text-center text-muted">
             <p>A demo by <a href="http://scotch.io">Scotch</a>. With modifications by <a href="https://github.com/dansand71" target="_blank">Dan Sandlin</a> &amp; <a href="https://github.com/jschluchter">Joey Schluchter</a></p>
             <p>Read the <a href="http://scotch.io/tutorials/javascript/creating-a-single-page-todo-app-with-node-and-angular">tutorial</a>.</p>
-            <p>Current mongodb connection type: {{ hostInfo.dbconn }} </p>
+            <p><strong> mongodb connection type: {{ hostInfo.dbconn }} </strong></p>
             <p>Hostname: {{ hostInfo.hostname }} </p>
             <p>OS Type: {{ hostInfo.ostype }} </p>
             <p>Process Uptime: {{ hostInfo.osuptime }} </p>
