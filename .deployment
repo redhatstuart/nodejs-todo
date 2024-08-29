@@ -1,3 +1,0 @@
-[config]
-command = deploy.sh
-#cp $DEPLOYMENT_SOURCE% %DEPLOYMENT_TARGET% 
