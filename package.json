@@ -8,7 +8,7 @@
     "repository": {
         "type": "git",
         "url": "git://https://github.com/redhatstuart/nodejs-todo"
-        }
+        },
     "dependencies": {
         "body-parser": "1.4.3",
         "express": "4.13.4",
