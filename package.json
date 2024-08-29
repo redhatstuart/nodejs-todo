@@ -4,6 +4,11 @@
     "description": "Simple To-Do Application to demonstrate OpenShift Virtualization VM migration and OCP modernization",
     "main": "server.js",
     "author": "Stuart Kirk & Dain Landis",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git://https://github.com/redhatstuart/nodejs-todo",
+        }
     "dependencies": {
         "body-parser": "1.4.3",
         "express": "4.13.4",
