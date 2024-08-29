@@ -1,0 +1,46 @@
+# NODE 2 - TODO
+cat <<'EOF' >> /etc/yum.repos.d/mongodb-org-4.2.repo
+[mongodb-org-4.2]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/8Server/mongodb-org/4.2/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc
+EOF
+dnf -y update
+dnf -y install mongodb-org
+sed -i "s/127.0.0.1/0.0.0.0/g" /etc/mongod.conf
+sed -i "s/SELINUX=enforcing/SELINUX=permissive/g" /etc/selinux/config
+systemctl stop firewalld
+systemctl disable firewalld
+systemctl mask firewalld
+systemctl enable mongod
+reboot
+
+# NODE 1 - TODO
+dnf -y update
+dnf -y install git telnet
+npm install pm2@3.5.2 -g
+systemctl stop firewalld
+systemctl disable firewalld
+systemctl mask firewalld
+sed -i "s/SELINUX=enforcing/SELINUX=permissive/g" /etc/selinux/config
+cd /usr/local
+wget https://nodejs.org/download/release/v7.10.1/node-v7.10.1-linux-x64.tar.gz
+tar xfz node-v7.10.1-linux-x64.tar.gz
+rm -f node-v7.10.1-linux-x64.tar.gz
+chown -R root:root node-v7.10.1-linux-x64
+cd /usr/local/bin
+ln -s ../node-v7.10.1-linux-x64/bin/node .
+ln -s ../node-v7.10.1-linux-x64/bin/npm .
+ln -s ../node-v7.10.1-linux-x64/bin/pm2 .
+mkdir -p /source/sample-apps
+cd /source/sample-apps
+git clone https://github.com/redhatstuart/nodejs-todo
+cd /source/sample-apps/nodejs-todo
+npm install
+pm2 start server.js
+pm2 save
+pm2 startup systemd -u root
+systemctl enable pm2-root
+reboot
