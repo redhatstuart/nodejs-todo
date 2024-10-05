@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+  namespace: nodejs-todo
+  annotations:
+    MetalLB.universe.tf/address-pool: apex-ip-addresspool-1
+spec:
+  selector:
+    deployment: mongodb4-2
+  ports:
+    - port: 27017
+      name: mongodb
+      protocol: TCP
+  type: LoadBalancer
