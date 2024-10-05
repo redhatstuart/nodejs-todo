@@ -1,0 +1,8 @@
+# Clean Up
+oc delete svc node1-loadbalancer-service -n virtualmachines
+oc delete svc node2-clusterip-service -n virtualmachines
+virtctl stop demo-apex-m01
+virtctl stop demo-apex-m02
+sleep 5
+oc delete vm demo-apex-m01 -n virtualmachines
+oc delete vm demo-apex-m02 -n virtualmachines
