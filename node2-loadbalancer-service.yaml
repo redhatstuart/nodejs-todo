@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: node2-clusterip-service
   namespace: virtualmachines
+  annotations:
+    MetalLB.universe.tf/address-pool: apex-ip-addresspool-1
 spec:
   ports:
   - port: 27017
@@ -13,4 +15,4 @@ spec:
     protocol: TCP
   selector:
     todoservice: node2
-  type: ClusterIP
+  type: LoadBalancer
