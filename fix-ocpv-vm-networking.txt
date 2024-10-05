@@ -1,6 +1,6 @@
 # Variables
-NODE1=vm1
-NODE2=vm2
+NODE1=demo-apex-m01
+NODE2=demo-apex-m02
 PROJECT=virtualmachines
 
 # Patch Virtual Machine YAML as required for service application
