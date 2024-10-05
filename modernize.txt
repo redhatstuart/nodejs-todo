@@ -1,0 +1,86 @@
+# Get repo
+git clone https://github.com/redhatstuart/nodejs-todo
+cd nodejs-todo
+
+# Login to OpenShift Cluster
+oc login https://api.acp-openshift.acprhos.wwtatc.com:6443 -u <LOGIN> -p <PASSWORD>
+
+# Switch to "virtualmachines" project
+oc project virtualmachines
+
+# Patch Virtual Machine YAML as required for service application
+oc patch vm demo-apex-m01 -p '{"spec": {"template": {"metadata": {"labels": {"todoservice": "node1"}}}}}' --type merge -n virtualmachines
+oc patch vm demo-apex-m02 -p '{"spec": {"template": {"metadata": {"labels": {"todoservice": "node2"}}}}}' --type merge -n virtualmachines
+
+# Apply OCP networking service manifests to expose applications
+oc apply -f node1-loadbalancer-service.yaml
+oc apply -f node2-clusterip-service.yaml
+
+# Start both virtual machines but start m02 first so the database is running
+virtctl start demo-apex-m02 -n virtualmachines
+virtctl start demo-apex-m01 -n virtualmachines
+
+# Obtain requisite IP addresses from OCP services
+NODE1IP=$(oc get svc node1-loadbalancer-service --no-headers -n virtualmachines | awk '{print $4}')
+NODE2IP=$(oc get svc node2-clusterip-service --no-headers -n virtualmachines | awk '{print $3}')
+
+# Remove the last line in /etc/hosts which is the ip:host reference for node2
+ssh root@$NODE1IP "sed -i '\$d' /etc/hosts"
+
+# Replace node2 ip address'
+ssh root@$NODE1IP "echo $NODE2IP node2 >> /etc/hosts"
+
+# Restart NodeJS app
+ssh root@$NODE1IP "systemctl restart pm2-root"
+
+# Test Todo Application running in a virtual machines in OpenShift Virtualization
+echo "Visit http://$NODE1IP:8080"
+
+<add entries to todo list>
+
+# ===================================
+# MODERNIZE APPLICATION TO CONTAINERS
+# ===================================
+
+# Login to OpenShift Cluster
+oc login https://api.acp-openshift.acprhos.wwtatc.com:6443 -u <LOGIN> -p <PASSWORD>
+
+# Create project for modernized application and database
+oc new-project nodejs-todo
+
+# Create service accounts for modernized application and database and assign "privilieged" role
+oc create sa nodejs-todo-sa
+oc create sa mongodb4-2-sa
+oc adm policy add-scc-to-user privileged -z nodejs-todo-sa
+oc adm policy add-scc-to-user privileged -z mongodb4-2-sa
+
+# Deploy MongoDB database and OpenShift service
+oc new-app quay.io/stuartrkirk/mongodb4.2
+oc patch deployment mongodb4-2 -p '{"spec":{"template":{"spec":{"containers":[{"name":"mongodb4-2","securityContext":{"privileged":true}}]}}}}'
+oc set sa deploy mongodb4-2 mongodb4-2-sa
+oc apply -f mongodb-service.yaml
+
+# Deploy NodeJS application and OpenShift service
+oc new-app quay.io/stuartrkirk/nodejs-todo:latest
+oc patch deployment nodejs-todo -p '{"spec":{"template":{"spec":{"containers":[{"name":"nodejs-todo","securityContext":{"privileged":true}}]}}}}'
+oc set sa deploy nodejs-todo nodejs-todo-sa
+oc apply -f nodejs-service.yaml
+oc apply -f nodejs-route.yaml
+
+# Re connect to OCP Virtualization VM 1 to migrate application data
+ssh root@$NODE1IP
+
+# Login to OpenShift Cluster
+oc login https://api.acp-openshift.acprhos.wwtatc.com:6443 -u <LOGIN> -p <PASSWORD>
+
+# Obtain IP address of newly containerized MongoDB
+MONGOIP=$(oc get svc mongodb-service -n nodejs-todo --no-headers | awk '{print $4}')
+
+# Export existing MongoDB entries from database hosted on virtual machines
+mongoexport -h node2 -d node-todo -c todos --out todos.json
+
+# Import existing MongoDB entries to database hosted in container
+mongoimport -h $MONGOIP -d node-todo -c todos --file=todos.json
+
+# Test Todo Application running in a container on OCP
+echo "Please visit: https://$(oc get route nodejs-route -n nodejs-todo --no-headers | awk '{print $2}')"
