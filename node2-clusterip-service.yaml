@@ -6,7 +6,7 @@ metadata:
 spec:
   ports:
   - port: 27017
-    name: mariadb
+    name: mongodb
     protocol: TCP
   - port: 22
     name: ssh
