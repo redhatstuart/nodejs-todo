@@ -1,18 +1,23 @@
+# Variables
+NODE1=vm1
+NODE2=vm2
+PROJECT=virtualmachines
+
 # Patch Virtual Machine YAML as required for service application
-oc patch vm demo-apex-m01 -p '{"spec": {"template": {"metadata": {"labels": {"todoservice": "node1"}}}}}' --type merge -n virtualmachines
-oc patch vm demo-apex-m02 -p '{"spec": {"template": {"metadata": {"labels": {"todoservice": "node2"}}}}}' --type merge -n virtualmachines
+oc patch vm $NODE1 -p '{"spec": {"template": {"metadata": {"labels": {"todoservice": "node1"}}}}}' --type merge -n $PROJECT
+oc patch vm $NODE2 -p '{"spec": {"template": {"metadata": {"labels": {"todoservice": "node2"}}}}}' --type merge -n $PROJECT
 
 # Apply OCP networking service manifests to expose applications
 oc apply -f node1-loadbalancer-service.yaml
 oc apply -f node2-clusterip-service.yaml
 
 # Start both virtual machines but start m02 first so the database is running
-virtctl start demo-apex-m02
-virtctl start demo-apex-m01
+virtctl start $NODE2
+virtctl start $NODE1
 
 # Obtain requisite IP addresses from OCP services
-NODE1IP=$(oc get svc node1-loadbalancer-service --no-headers -n virtualmachines |awk '{print $4}')
-NODE2IP=$(oc get svc node2-clusterip-service --no-headers -n virtualmachines |awk '{print $3}')
+NODE1IP=$(oc get svc node1-loadbalancer-service --no-headers -n $PROJECT |awk '{print $4}')
+NODE2IP=$(oc get svc node2-clusterip-service --no-headers -n $PROJECT |awk '{print $3}')
 
 # Remove the last line in /etc/hosts which is the ip:host reference for node2
 ssh root@$NODE1IP "sed -i '\$d' /etc/hosts"
