@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: node2-clusterip-service-NODE2NAME
+  name: node2-clusterip-service
   namespace: virtualmachines
 spec:
   ports:
@@ -12,5 +12,5 @@ spec:
     name: ssh
     protocol: TCP
   selector:
-    todoservice: node2-NODE2NAME
+    todoservice: node2
   type: ClusterIP
