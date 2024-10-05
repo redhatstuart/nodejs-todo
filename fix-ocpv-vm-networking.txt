@@ -1,0 +1,27 @@
+# Patch Virtual Machine YAML as required for service application
+oc patch vm demo-apex-m01 -p '{"spec": {"template": {"metadata": {"labels": {"todoservice": "node1"}}}}}' --type merge -n virtualmachines
+oc patch vm demo-apex-m02 -p '{"spec": {"template": {"metadata": {"labels": {"todoservice": "node2"}}}}}' --type merge -n virtualmachines
+
+# Apply OCP networking service manifests to expose applications
+oc apply -f node1-loadbalancer-service.yaml
+oc apply -f node2-clusterip-service.yaml
+
+# Start both virtual machines but start m02 first so the database is running
+virtctl start demo-apex-m02
+virtctl start demo-apex-m01
+
+# Obtain requisite IP addresses from OCP services
+NODE1IP=$(oc get svc node1-loadbalancer-service --no-headers -n virtualmachines |awk '{print $4}')
+NODE2IP=$(oc get svc node2-clusterip-service --no-headers -n virtualmachines |awk '{print $3}')
+
+# Remove the last line in /etc/hosts which is the ip:host reference for node2
+ssh root@$NODE1IP "sed -i '\$d' /etc/hosts"
+
+# Replace node2 ip address'
+ssh root@$NODE1IP "echo $NODE2IP node2 >> /etc/hosts"
+
+# Restart NodeJS app
+ssh root@$NODE1IP "systemctl restart pm2-root"
+
+# Banner
+echo "Visit http://$NODE1IP:8080"
