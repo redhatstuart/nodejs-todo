@@ -1,0 +1,16 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: nodejs-route
+  namespace: nodejs-todo
+spec:
+  host: nodejs-todo-nodejs-todo.apps.acp-openshift.acprhos.wwtatc.com
+  port:
+    targetPort: nodejs-todo
+  tls:
+    termination: edge
+  to:
+    kind: Service
+    name: nodejs-service
+    weight: 100
+  wildcardPolicy: None
