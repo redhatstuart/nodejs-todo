@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: node1-loadbalancer-service-$NODE1
+  name: node1-loadbalancer-service-NODE1NAME
   namespace: virtualmachines
   annotations:
     MetalLB.universe.tf/address-pool: apex-ip-addresspool-1
 spec:
   selector:
-    todoservice: node1-$NODE1
+    todoservice: node1-NODE1NAME
   ports:
     - port: 22
       name: ssh
