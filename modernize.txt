@@ -1,4 +1,8 @@
-# Get repo
+##########################################################
+# POST VM MIGRATION APPLICATION AND DATABASE CONFIGURATION
+##########################################################
+
+# Get nodejs-todo repo
 git clone https://github.com/redhatstuart/nodejs-todo
 cd nodejs-todo
 
