@@ -3,8 +3,6 @@ kind: Service
 metadata:
   name: mongodb-service
   namespace: nodejs-todo
-  annotations:
-    MetalLB.universe.tf/address-pool: apex-ip-addresspool-1
 spec:
   selector:
     deployment: mongodb4-2
@@ -12,4 +10,4 @@ spec:
     - port: 27017
       name: mongodb
       protocol: TCP
-  type: LoadBalancer
+  type: ClusterIP
