@@ -68,7 +68,6 @@ oc apply -f mongodb-service.yaml
 oc new-app quay.io/stuartrkirk/nodejs-todo:latest
 oc patch deployment nodejs-todo -p '{"spec":{"template":{"spec":{"containers":[{"name":"nodejs-todo","securityContext":{"privileged":true}}]}}}}'
 oc set sa deploy nodejs-todo nodejs-todo-sa
-oc apply -f nodejs-service.yaml
 oc apply -f nodejs-route.yaml
 
 # Re connect to OCP Virtualization VM 1 to migrate application data
