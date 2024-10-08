@@ -11,6 +11,6 @@ spec:
     termination: edge
   to:
     kind: Service
-    name: nodejs-service
+    name: nodejs-todo
     weight: 100
   wildcardPolicy: None
