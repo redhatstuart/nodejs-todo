@@ -1,16 +1,20 @@
-apiVersion: route.openshift.io/v1
 kind: Route
+apiVersion: route.openshift.io/v1
 metadata:
-  name: nodejs-route
+  name: nodejs-todo
   namespace: nodejs-todo
+  labels:
+    app: nodejs-todo
+    app.kubernetes.io/component: nodejs-todo
+    app.kubernetes.io/instance: nodejs-todo
 spec:
   host: nodejs-todo-nodejs-todo.apps.acp-openshift.acprhos.wwtatc.com
-  port:
-    targetPort: nodejs-todo
-  tls:
-    termination: edge
   to:
     kind: Service
     name: nodejs-todo
     weight: 100
+  port:
+    targetPort: 8080-tcp
+  tls:
+    termination: edge
   wildcardPolicy: None
