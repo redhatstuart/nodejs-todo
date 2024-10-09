@@ -1,6 +1,6 @@
-##########################################################
-# POST VM MIGRATION APPLICATION AND DATABASE CONFIGURATION
-##########################################################
+##########################################################################################
+# POST VM MIGRATION APPLICATION AND DATABASE CONFIGURATION REQUIRED FOR OCP VIRTUALIZATION
+##########################################################################################
 
 # Get nodejs-todo repo
 git clone https://github.com/redhatstuart/nodejs-todo
@@ -40,25 +40,25 @@ ssh root@$NODE1IP "systemctl restart pm2-root"
 # Test Todo Application running in a virtual machines in OpenShift Virtualization
 echo "Visit http://$NODE1IP:8080"
 
-<add several entries to the todo list which we will migrate later>
+# ***add several entries to the todo list which we will migrate later***
 
-# ===================================
+#####################################
 # MODERNIZE APPLICATION TO CONTAINERS
-# ===================================
+#####################################
 
-# Login to OpenShift Cluster
+# Login to OpenShift Cluster (if not already)
 oc login https://api.acp-openshift.acprhos.wwtatc.com:6443 -u <LOGIN> -p <PASSWORD>
 
 # Create project for modernized application and database
 oc new-project nodejs-todo
 
-# Create service accounts for modernized application and database and assign "privilieged" role
+# Create service accounts for modernized application and database. Assign "privilieged" role to service accounts
 oc create sa nodejs-todo-sa
 oc create sa mongodb4-2-sa
 oc adm policy add-scc-to-user privileged -z nodejs-todo-sa
 oc adm policy add-scc-to-user privileged -z mongodb4-2-sa
 
-# Deploy MongoDB database and OpenShift service
+# Deploy MongoDB database as a containerized application in OCP & 
 oc new-app quay.io/stuartrkirk/mongodb4.2
 oc patch deployment mongodb4-2 -p '{"spec":{"template":{"spec":{"containers":[{"name":"mongodb4-2","securityContext":{"privileged":true}}]}}}}'
 oc set sa deploy mongodb4-2 mongodb4-2-sa
@@ -73,10 +73,14 @@ oc apply -f nodejs-route.yaml
 # Test Todo Application running in a container on OCP - Verify todo data is missing and still needs to be migrated
 echo "Please visit: https://$(oc get route nodejs-todo -n nodejs-todo --no-headers | awk '{print $2}')"
 
+######################
+# BEGIN DATA MIGRATION
+######################
+
 # Run a helper pod to facilitate the migration
 oc run -it ocp-todo-pod --image=quay.io/stuartrkirk/ocp-todo-pod --rm -- /bin/bash
 
-# Login to OpenShift Cluster
+# Login to OpenShift Cluster from inside the helper pod
 oc login https://api.acp-openshift.acprhos.wwtatc.com:6443 -u <LOGIN> -p <PASSWORD>
 
 # Obtain required IP addresses for MongoDB backends
