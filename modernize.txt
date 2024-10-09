@@ -70,23 +70,27 @@ oc patch deployment nodejs-todo -p '{"spec":{"template":{"spec":{"containers":[{
 oc set sa deploy nodejs-todo nodejs-todo-sa
 oc apply -f nodejs-route.yaml
 
-# Test Todo Application running in a container on OCP - Verify todo data is missing
+# Test Todo Application running in a container on OCP - Verify todo data is missing and still needs to be migrated
 echo "Please visit: https://$(oc get route nodejs-todo -n nodejs-todo --no-headers | awk '{print $2}')"
 
-# Re connect to OCP Virtualization VM 1 to migrate application data
-ssh root@$NODE1IP
+# Run a helper pod to facilitate the migration
+oc run -it ocp-todo-pod --image=quay.io/stuartrkirk/ocp-todo-pod --rm -- /bin/bash
 
 # Login to OpenShift Cluster
 oc login https://api.acp-openshift.acprhos.wwtatc.com:6443 -u <LOGIN> -p <PASSWORD>
 
-# Obtain IP address of newly containerized MongoDB
-MONGOIP=$(oc get svc mongodb-service -n nodejs-todo --no-headers | awk '{print $3}')
+# Obtain required IP addresses for MongoDB backends
+OLDMONGOIP=$(oc get svc node2-clusterip-service -n virtualmachines --no-headers |awk '{print $3}')
+NEWMONGOIP=$(oc get svc mongodb-service -n nodejs-todo --no-headers | awk '{print $3}')
 
 # Export existing MongoDB entries from database hosted on virtual machines
-mongoexport -h node2 -d node-todo -c todos --out todos.json
+mongoexport -h $OLDMONGOIP:27017 -d node-todo -c todos --out todos.json
 
 # Import existing MongoDB entries to database hosted in container
-mongoimport -h $MONGOIP -d node-todo -c todos --file=todos.json
+mongoimport -h $NEWMONGOIP:27017 -d node-todo -c todos --file=todos.json
+
+# Exit and destroy container
+exit
 
 # Test Todo Application running in a container on OCP
-echo "Please visit: https://$(oc get route nodejs-route -n nodejs-todo --no-headers | awk '{print $2}')"
+echo "Please visit: https://$(oc get route nodejs-todo -n nodejs-todo --no-headers | awk '{print $2}')"
