@@ -70,6 +70,9 @@ oc patch deployment nodejs-todo -p '{"spec":{"template":{"spec":{"containers":[{
 oc set sa deploy nodejs-todo nodejs-todo-sa
 oc apply -f nodejs-route.yaml
 
+# Test Todo Application running in a container on OCP - Verify todo data is missing
+echo "Please visit: https://$(oc get route nodejs-route -n nodejs-todo --no-headers | awk '{print $2}')"
+
 # Re connect to OCP Virtualization VM 1 to migrate application data
 ssh root@$NODE1IP
 
