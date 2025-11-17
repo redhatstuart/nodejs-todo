@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: nodejs-todo
+  namespace: virtualmachines
+spec:
+  host: nodejs-todo-virtualmachines.apps.acp-openshift.acprhos.wwtatc.com
+  port:
+    targetPort: app
+  tls:
+    insecureEdgeTerminationPolicy: Allow
+    termination: edge
+  to:
+    kind: Service
+    name: node1-clusterip-service
+    weight: 100
+  wildcardPolicy: None
