@@ -54,6 +54,14 @@
         name: nodejs-todo
         namespace: virtualmachines
 
+    - name: Delete the 'migrate-nodejs' migration plan
+      kubernetes.core.k8s:
+        state: absent
+        api_version: forklift.konveyor.io/v1beta1
+        kind: Plan
+        name: migrate-nodejs
+        namespace: openshift-mtv
+
     - name: Ensure demo-apex-vms are powered off
       vmware.vmware_rest.vcenter_vm_power:
         vcenter_validate_certs: false
