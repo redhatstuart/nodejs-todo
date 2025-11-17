@@ -1,0 +1,78 @@
+---
+- name: Reset NodeJS MongoDB Demo Environment
+  hosts: localhost
+  vars:
+    vm_names:
+      - demo-apex-m01
+      - demo-apex-m02
+    clone_names:
+      - demo-apex-m01-gold
+      - demo-apex-m02-gold
+
+  tasks:
+
+    - name: Delete the 'nodejs-todo' namespace on Dell APEX OCP
+      kubernetes.core.k8s:
+        name: nodejs-todo
+        kind: Namespace
+        api_version: v1
+        state: absent
+
+    - name: Delete demo-apex-m01 VM in OpenShift Virtualization
+      redhat.openshift_virtualization.kubevirt_vm:
+        state: absent
+        name: demo-apex-m01
+        namespace: virtualmachines
+
+    - name: Delete demo-apex-m02 VM in OpenShift Virtualization
+      redhat.openshift_virtualization.kubevirt_vm:
+        state: absent
+        name: demo-apex-m02
+        namespace: virtualmachines
+
+    - name: Remove node1-loadbalancer-service from virtualmachines project
+      kubernetes.core.k8s:
+        state: absent
+        api_version: v1
+        kind: Service
+        namespace: virtualmachines
+        name: node1-loadbalancer-service
+
+    - name: Remove node2-clusterip-service from virtualmachines project
+      kubernetes.core.k8s:
+        state: absent
+        api_version: v1
+        kind: Service
+        namespace: virtualmachines
+        name: node2-clusterip-service
+
+    - name: Ensure demo-apex-vms are powered off
+      vmware.vmware_rest.vcenter_vm_power:
+        vcenter_validate_certs: false
+        state: stop
+        vm: "{{ lookup('vmware.vmware_rest.vm_moid', item, vcenter_validate_certs=false) }}"
+      loop: "{{ vm_names }}"
+
+    - name: Ensure demo-apex-gold-vms are powered off
+      vmware.vmware_rest.vcenter_vm_power:
+        vcenter_validate_certs: false
+        state: stop
+        vm: "{{ lookup('vmware.vmware_rest.vm_moid', item, vcenter_validate_certs=false) }}"
+      loop: "{{ clone_names }}"
+
+    - name: Delete demo-apex-vms in helios
+      vmware.vmware_rest.vcenter_vm:
+        vcenter_validate_certs: false
+        vm: "{{ lookup('vmware.vmware_rest.vm_moid', item, vcenter_validate_certs=false) }}"
+        state: absent
+        name: "{{ item }}"
+      loop: "{{ vm_names }}"
+
+    - name: Clone and start demo-apex-vms in helios
+      vmware.vmware_rest.vcenter_vm:
+        vcenter_validate_certs: false
+        source: "{{ lookup('vmware.vmware_rest.vm_moid', item, vcenter_validate_certs=false) }}"
+        power_on: true
+        state: clone
+        name: "{{ item.split('-gold')[0] }}"
+      loop: "{{ clone_names }}"
