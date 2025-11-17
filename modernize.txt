@@ -1,23 +1,86 @@
 ##########################################################################################
-# POST VM MIGRATION APPLICATION AND DATABASE CONFIGURATION REQUIRED FOR OCP VIRTUALIZATION
+# PRE-WORK
 ##########################################################################################
 
+# In Ansible, execute the "Migrate 4: Reset Template Survey - Revert VM Survey to original VMs" template
+# This playbook will "reset" the survey that is contained within the "migrate 1" playbook so that only two virtual
+# machines are listed as Ansible survey options. This is where you should impress on your audience that keying in
+# multiple hostnames, especially for large scale migrations, is extremely tedious and the propensity for keying errors
+# increases significantly
+
 # Get nodejs-todo repo
-git clone https://github.com/redhatstuart/nodejs-todo
+git clone https://gitlab.apps.acp-openshift.acprhos.wwtatc.com/wwtgroup/nodejs-todo
 cd nodejs-todo
 
 # Login to OpenShift Cluster
-oc login https://api.acp-openshift.acprhos.wwtatc.com:6443 -u <LOGIN> -p <PASSWORD>
+oc login https://api.cluster.subdomain.domain.com:6443 -u <LOGIN> -p <PASSWORD>
 
-# Switch to "virtualmachines" project
+# Switch to the "virtualmachines" project; if it doesn't exist, create it.
+oc new-project virtualmachines
 oc project virtualmachines
+
+##########################################################################################
+# START IN VMWARE
+##########################################################################################
+
+# The app should be running on two virtual machines, demo-apex-m01 & demo-apex-m02
+# Visit the endpoint for demo-apex-m01 which should be running in VMWare
+# If the app is working correctly, you should see the "To-Do" app waiting to accept an entry to place onto the list
+# Enter multiple notes to place onto the list; This will be your initial dataset.
+
+##########################################################################################
+# SWITCH TO ANSIBLE
+##########################################################################################
+
+# We will use Ansible to migrate two virtual machines from VMWare to OpenShift Virtualization.
+# It should be impressed upon your audience that while this action is being performed on a single virtual machine,
+# it would be just as easy to create a migration plan that would execute the mass-migration of multiple virtual machines.
+
+# Run the "Migrate 1: VMware to OpenShift Virtualization" template
+# Note that when you click on "Which VM(s) to migrate?", you get a listing of a few VMs with obscure hostnames which 
+# would normally be presented in a "textbox" that would need the user to manually input each hostname. Wouldn't it
+# be better if we were able to auto-populate this list with all of the virtual machines existing in VMWare?
+
+# Run the "Migrate 3: Update Template Survey - Add all VMs from vCenter" template
+# This playbook will populate the survey that is contained within the "Migrate 1" playbook so that all of the virtual
+# machines detected within VMWare can be "clicked" to migrate as Ansible survey options, rather than keying in 
+# hostnames and risk making typing errors
+
+# Run the "Migrate 1: VMware to OpenShift Virtualization" template once again
+# When you click on "Which VM(s) to migrate?" once again, you will now see the entire list of virtual machines from
+# vCenter are made avaialble and can be selected for migration with the 'click of a button' rather than keying in 
+# hostnames.
+#
+# In this exercise, we will migrate both virtual machines: 'demo-apex-m01' and 'demo-apex-m02'
+# entered dataset. Enter the name "migrate-nodejs", select the appropriate VMs, and execute the template.
+
+# From the Ansible Output window, we should see that the data has "[changed]" and our migration plan has been created in OCP
+
+##########################################################################################
+# SWITCH TO OCP
+##########################################################################################
+
+# Visit the "Migration" > "Plans for virtualization" tab
+# The migration plan previously created by Ansible should exist in the list of migration plans
+# If the migration plan hasn't started yet, Click "Start" and then select the name of the plan, "migrate-nodejs"
+# Click on "Virtual Machines" and verify that the migration is underway for both virtual machines
+# Wait for this to complete - Should take roughly 3 minutes
+
+
+##########################################################################################
+# POST VM MIGRATION APPLICATION AND DATABASE CONFIGURATION REQUIRED FOR OCP VIRTUALIZATION
+##########################################################################################
+
+# Start both virtual machines but start m02 first so the database is running
+virtctl stop demo-apex-m01 -n virtualmachines
+virtctl stop demo-apex-m02 -n virtualmachines
 
 # Patch Virtual Machine YAML as required for service application
 oc patch vm demo-apex-m01 -p '{"spec": {"template": {"metadata": {"labels": {"todoservice": "node1"}}}}}' --type merge -n virtualmachines
 oc patch vm demo-apex-m02 -p '{"spec": {"template": {"metadata": {"labels": {"todoservice": "node2"}}}}}' --type merge -n virtualmachines
 
 # Apply OCP networking service manifests to expose applications
-oc apply -f node1-loadbalancer-service.yaml
+oc apply -f node1-clusterip-service.yaml
 oc apply -f node2-clusterip-service.yaml
 
 # Start both virtual machines but start m02 first so the database is running
@@ -25,29 +88,29 @@ virtctl start demo-apex-m02 -n virtualmachines
 virtctl start demo-apex-m01 -n virtualmachines
 
 # Obtain requisite IP addresses from OCP services
-NODE1IP=$(oc get svc node1-loadbalancer-service --no-headers -n virtualmachines | awk '{print $4}')
-NODE2IP=$(oc get svc node2-clusterip-service --no-headers -n virtualmachines | awk '{print $3}')
+#NODE1IP=$(oc get svc node1-clusterip-service --no-headers -n virtualmachines | awk '{print $4}') ; echo $NODE1IP
+NODE2IP=$(oc get svc node2-clusterip-service --no-headers -n virtualmachines | awk '{print $3}') ; echo $NODE2IP
 
 # Remove the last line in /etc/hosts which is the ip:host reference for node2
-ssh root@$NODE1IP "sed -i '\$d' /etc/hosts"
+virtctl ssh root@demo-apex-m01 -n virtualmachines -c "sed -i '\$d' /etc/hosts"
 
-# Replace node2 ip address'
-ssh root@$NODE1IP "echo $NODE2IP node2 >> /etc/hosts"
+# Replace node2 ip address
+virtctl ssh root@demo-apex-m01 -n virtualmachines -c "echo $NODE2IP node2 >> /etc/hosts"
 
 # Restart NodeJS app
-ssh root@$NODE1IP "systemctl restart pm2-root"
+virtctl ssh root@demo-apex-m01 -n virtualmachines -c "systemctl restart pm2-root"
+
+# Expose route to application
+oc apply -f node1-route.yaml
 
 # Test Todo Application running in a virtual machines in OpenShift Virtualization
-echo "Visit http://$NODE1IP:8080"
+echo "Visit https://$(oc get route --no-headers |awk '{print $2}')"
 
 # ***add several entries to the todo list which we will migrate later***
 
 #####################################
 # MODERNIZE APPLICATION TO CONTAINERS
 #####################################
-
-# Login to OpenShift Cluster (if not already)
-oc login https://api.acp-openshift.acprhos.wwtatc.com:6443 -u <LOGIN> -p <PASSWORD>
 
 # Create project for modernized application and database
 oc new-project nodejs-todo
@@ -59,7 +122,7 @@ oc adm policy add-scc-to-user privileged -z nodejs-todo-sa
 oc adm policy add-scc-to-user privileged -z mongodb4-2-sa
 
 # Deploy MongoDB database as a containerized application in OCP & 
-oc new-app quay.io/stuartrkirk/mongodb4.2
+oc new-app quay.io/stuartrkirk/mongodb4.2:latest
 oc patch deployment mongodb4-2 -p '{"spec":{"template":{"spec":{"containers":[{"name":"mongodb4-2","securityContext":{"privileged":true}}]}}}}'
 oc set sa deploy mongodb4-2 mongodb4-2-sa
 oc apply -f mongodb-service.yaml
@@ -78,14 +141,14 @@ echo "Please visit: https://$(oc get route nodejs-todo -n nodejs-todo --no-heade
 ######################
 
 # Run a helper pod to facilitate the migration
-oc run -it ocp-todo-pod --image=quay.io/stuartrkirk/ocp-todo-pod --rm -- /bin/bash
+oc run -it ocp-todo-pod --image=quay.io/stuartrkirk/ocp-todo-pod:latest --rm --overrides='{ "spec": { "securityContext": { "runAsUser": 0 } } }' -- /bin/bash
 
 # Login to OpenShift Cluster from inside the helper pod
-oc login https://api.acp-openshift.acprhos.wwtatc.com:6443 -u <LOGIN> -p <PASSWORD>
+oc login https://api.cluster.subdomain.domain.com:6443 -u <LOGIN> -p <PASSWORD>
 
 # Obtain required IP addresses for MongoDB backends
-OLDMONGOIP=$(oc get svc node2-clusterip-service -n virtualmachines --no-headers |awk '{print $3}')
-NEWMONGOIP=$(oc get svc mongodb-service -n nodejs-todo --no-headers | awk '{print $3}')
+OLDMONGOIP=$(oc get svc node2-clusterip-service -n virtualmachines --no-headers |awk '{print $3}') ; echo $OLDMONGOIP
+NEWMONGOIP=$(oc get svc mongodb-service -n nodejs-todo --no-headers | awk '{print $3}') ; echo $NEWMONGOIP
 
 # Export existing MongoDB entries from database hosted on virtual machines
 mongoexport -h $OLDMONGOIP:27017 -d node-todo -c todos --out todos.json
@@ -98,3 +161,4 @@ exit
 
 # Test Todo Application running in a container on OCP
 echo "Please visit: https://$(oc get route nodejs-todo -n nodejs-todo --no-headers | awk '{print $2}')"
+
