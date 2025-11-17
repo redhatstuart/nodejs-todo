@@ -162,3 +162,10 @@ exit
 # Test Todo Application running in a container on OCP
 echo "Please visit: https://$(oc get route nodejs-todo -n nodejs-todo --no-headers | awk '{print $2}')"
 
+##########################################################################################
+# CLEAN UP
+##########################################################################################
+
+# In Ansible, execute the "NodeJS 1: Reset NodeJS Demo Environment" template
+# This will reset the environment completely and delete all unnecessay VMs.
+
