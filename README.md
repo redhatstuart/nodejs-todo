@@ -17,6 +17,8 @@ Node provides the RESTful API. Angular provides the frontend and accesses the AP
 3. Start the server: `node server.js`
 4. View in browser at `http://localhost:8080`
 
+#For the ASA/ESA demo challenge, please see the delivery script entitled "modernize.txt"
+
 ## Deploy
 
 You can deploy the application easilly executing: ` docker-compose up --build `
