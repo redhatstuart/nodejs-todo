@@ -4,6 +4,8 @@ A Node app built with MongoDB and Angular. For demonstration purposes and a tuto
 
 Node provides the RESTful API. Angular provides the frontend and accesses the API. MongoDB stores like a hoarder.
 
+# For the ASA/ESA demo challenge, please see the delivery script entitled "modernize.txt"
+
 ## Requirements
 
 - [Node and npm](http://nodejs.org)
@@ -16,8 +18,6 @@ Node provides the RESTful API. Angular provides the frontend and accesses the AP
 3. Place your own MongoDB URI in `config/database.js`
 3. Start the server: `node server.js`
 4. View in browser at `http://localhost:8080`
-
-#For the ASA/ESA demo challenge, please see the delivery script entitled "modernize.txt"
 
 ## Deploy
 
